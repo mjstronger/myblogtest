@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- meta使用viewport以确保页面可自由缩放 -->
+    <!-- 新 Bootstrap 核心 CSS 文件 -->
+<link href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+
+    <title>我的博客</title>
+</head>
+<body>
+<div class="container">
+    <div class="jumbotron">
+
+  <header id="header">
+    <h1><span>myblog</span></h1>
+    <ul  id="mainNavigation" class="nav nav-tabs">
+    <li><a href="index.html" class="active">首页</a></li>
+    <li><a href="#">博客</a></li>
+    <li><a href="#">信息</a></li>
+    </ul>
+  </header>
+<div class="row">
+  <div class="col-lg-10">
+    <div class="input-group">
+      <input type="text" class="form-control " placeholder="Search for...">
+      <span class="input-group-btn">
+        <button class="btn btn-default" type="button">Go!</button>
+      </span>
+    </div><!-- /input-group -->
+  </div><!-- /.col-lg-6 -->
+</div><!-- /.row -->
+<h1>
+    <button id="create" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal">新文章</button>
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+                <div class="modal-body">
+                    <div class="container">
+                <form class="form-horizontal">
+                    <div>
+                        <input type="hidden" id="id" name="id">
+                    </div>
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+					&times;
+				</button>
+                <div class="input-group">
+                <span class="input-group-addon">题目</span>
+                <input type="text" class="form-control" placeholder="标题" id="title" name="title">
+                </div>
+                    <div class="input-group">
+                        <textarea name="content" class="form-control" cols="80" rows="10" placeholder="内容" id="content"></textarea>
+                    </div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">关闭
+				</button>
+				<button type="button" class="btn btn-primary" id="sub">
+					提交
+				</button>
+            </div>
+                </form>
+                    </div>
+                </div>
+			</div>
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal -->
+</div>
+</h1>
+
+    <table class="table table-striped" >
+        <caption class="text-center">目录</caption>
+        <thead>
+        <tr>
+        <th>title</th>
+        <th>content</th>
+        </tr>
+        </thead>
+        <tbody class="" id="tbody">
+        </tbody>
+    </table>
+    </div>
+</div>
+</body>
+<!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
+<script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+
+<!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+
+    <script type="text/javascript" language="JavaScript">
+        $(function () {
+            var csrftoken = '{{ csrf_token }}';
+            var url = "blog/create";
+
+            $('#create').click(function () {
+            url = '/blog/create/'
+        });
+
+            $('#sub').click(function () {
+                var title = $('#title').val();
+                var content = $('#content').val();
+                var id = $('#id').val();
+                e.preventDefault();
+                {#阻止表单提交#}
+                $.post(url, {
+                    title: title,
+                    content: content,
+                    csrfmiddlewaretoken: csrftoken
+                });
+                $(function () {
+                    $('#myModal').modal('hide');
+                    $('#title').val('');
+                    $('#content').val('');
+                    getdate()
+                })
+            });
+
+            function getdate() {
+                $.post('blog/get_date', {}, function (result) {
+                    var blog_items = JSON.parse(result);
+                    var htmls = '';
+                    for (var i in blog_items) {
+                        htmls = htmls + '<tr id="' + blog_items[i].id + '">' +
+                            ' <td>' + blog_items[i].title + '</td>' +
+                            '<td>' + blog_items[i].content + '</td>' +
+                            '<td><button type="button" class="btn btn-sm btn-primary edit"  data-toggle="modal" data-target=".bs-example-modal-lg">编辑</button>' +
+                            '<button class="btn btn-sm btn-danger delete" >删除</button></td>' +
+                            '</tr>'
+                    }
+                    $('#tbody').html(htmls);
+                })
+            }
+
+            $('#tbody').on('click', '.edit', function (e) {
+                url = '/blog/update';
+                var id = $(e.target).parent().parent().attr('id');
+                $.get('/blog/get_data/', {'id': id}, function (res) {
+                    var blog = JSON.parse(res);
+                    blog = blog[0];
+                    $('#title').val(blog.title);
+                    $('#content').val(blog.content);
+                    $('#id').val(blog.id);
+                })
+            }).on('click', '.delete', function (e) {
+                if (confirm('你确定删除所选博客吗？')) {
+                    var id = $(e.target).parent().parent().attr('id');
+                    $.post('/blog/delete/', {'id': id, 'csrfmiddlewaretoken': csrftoken}, function (res) {
+                        if (res == 'OK') {
+                            get_data();
+                        }
+                    })
+                }
+
+            })
+        })
+
+    </script>
+</html>
